@@ -1,1 +1,0 @@
-Repo used to develop an energy consumption monitoring app that utilizes smart meters connected to the internet.
