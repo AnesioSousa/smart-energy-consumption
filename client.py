@@ -13,6 +13,13 @@ User-Agent: search1.py \r\n\
 Connection: close\r\n\
 \r\n\
 """
+
+
+"""
+f{verb}
+
+
+"""
 # se esse arquivo for executado como main
 if __name__ == '__main__':
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
