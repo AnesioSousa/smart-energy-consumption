@@ -1,70 +1,53 @@
 #!/usr/bin/env python3
 
 import socket
-import threading
 
 
-class Sensor():
-    def __init__(self, host, port):
-        print("entrou")
-        self.__host = host
-        self.__port = port
-        # serial number = bcrypt
-        self.send_to_server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+# self.send_to_server.setsockopt(socket.SOL_SOCKET, socket.SO_TYPE)
 
-        self.connect()
-        self.openfile('teste.txt', 'w')
-        self.writeFile()
 
-    @property
-    def host(self):
-        return self.__host
+def writeFile(client):
+    namefile = str(input('Name file>'))
+    try:
+        client.send(namefile.encode('utf-8'))
+        # Melhorar essa exception!
+    except:
+        return print("some error occurred")
 
-    @host.setter
-    def host(self, value):
-        self.__host = value
 
-    @property
-    def port(self):
-        return self.__port
-
-    @port.setter
-    def port(self, value):
-        self.__port = value
-
-    @classmethod
-    def receiveMessages(self):
+def openfile(client, namefile, mode):
+    with open(namefile, mode) as file:
         while True:
-            try:
-                msg = self.send_to_server.recv(2048).decode('utf-8')
-                print(msg+'\n')
-            except:
-                print('\nNão foi possível permanecer conectado ao servidor!\n')
-                print('Pressione <Enter> Para continuar...')
-                self.send_to_server.close()
+            data = client.recv(10_000)
+            if not data:
                 break
+            file = file.write(data)
+            print(f'{namefile} received !')
 
-    @classmethod
-    async def connect(self):
+
+def sendMessages(client, username):
+    while True:
         try:
-            await self.send_to_server.connect(self.host, self.port)
+            msg = input('\n')
+            client.send(f'<{username}> {msg}'.encode('utf-8'))
         except:
-            print('\nNão foi possível se conectar ao servidor')
+            return print("Houve um erro")
 
-    @classmethod
-    def writeFile(self):
-        namefile = str(input('Name file>'))
-        try:
-            self.send_to_server.send(namefile.encode('utf-8'))
-            # Melhorar essa exception!
-        except:
-            return print("some error occurred")
 
-    def openfile(self, namefile, mode):
-        with open(namefile, mode) as file:
-            while True:
-                data = self.send_to_server.recv(10_000)
-                if not data:
-                    break
-                file = file.write(data)
-                print(f'{namefile} received !')
+def main():
+    HOST = 'localhost'
+    PORT = 65136
+
+    send_to_server = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    try:
+        send_to_server.connect((HOST, PORT))
+    except:
+        return print('\nNão foi possívvel se conectar ao servidor!\n')
+
+    username = input('Usuário> ')
+    print('\nConectado')
+
+    sendMessages(send_to_server, username)
+
+
+main()
