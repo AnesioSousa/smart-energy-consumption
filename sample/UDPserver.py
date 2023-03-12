@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-
-import threading
 import socket
+import threading
+import multiprocessing
 
 
 def recvall(sock, length):
@@ -14,35 +14,33 @@ def recvall(sock, length):
                            ' %d bytes before the socket closed'
                            % (length, len(data)))
         data += more
-
     return data
 
 
 def dataTreatment(client):
-    while True:
-        try:
-            future = recvall(client, 225)
-            print(future)
-        except Exception as e:
-            print(e.args[0])
+    pass
 
 
-# Quando coloco o @classmethod não vai...
-# Sobrecarregar esse método para receber o socket
+def main():
+    HOST = 'localhost'
+    UDPPORT = 65120
+    MAX_BYTES = 65535
 
-
-def UDPstart_listening(host, port):
     UDPServerSocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
-    # Pra não deixar processos conectados. Quando o processo morrer fecha tudo
-    # UDPServerSocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    print("Até aqui")
     try:
-        UDPServerSocket.bind((host, port))
-        UDPServerSocket.listen()
-
+        UDPServerSocket.bind((HOST, UDPPORT))
         print(f'Server is running on: {UDPServerSocket.getsockname()}')
     except Exception as exc:
         print('exception: %s' % exc)
 
-    print("Um monitor conectou")
+    while True:
+        data, address = UDPServerSocket.recvfrom(MAX_BYTES)
+        text = data.decode('ascii')
+        print('The client at {} says {!r}'.format(address, text))
+        text = 'Your data was {} bytes long'.format(len(data))
+        data = text.encode('ascii')
+        UDPServerSocket.sendto(data, address)
+
+
+main()

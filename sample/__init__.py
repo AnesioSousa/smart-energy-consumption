@@ -1,1 +1,1 @@
-__all__ = ["server", "teste"]
+__all__ = ["TCPserver", "UDPserver"]

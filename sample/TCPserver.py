@@ -3,29 +3,15 @@
 import threading
 import socket
 import concurrent.futures
+import multiprocessing
 import sys
 import json
-
-from time import sleep
-from multiprocessing import Process
-from UDPserver import *
+import asyncio
+import signal
 
 # O que vai rodar no processo principal? Já que to usando thread pra tudo?
 
-
-def broadcast(msg, client):
-    """for clientItem in clients:
-        if clientItem != client:
-            try:
-                clientItem.send(msg)
-            except:
-                deleteClient(clientItem)"""
-    pass
-
-
-def deleteClient(client):
-    # clients.remove(client)
-    pass
+child_processes = []
 
 
 def recvall(sock, length):
@@ -62,71 +48,49 @@ def parse_message(message):
 
 
 def messagesTreatment(client):
-    while True:
-        try:
-            future = recvall(client, 225)
-            print(parse_message(future))
-            # broadcast(msg, client)
-        except:
-            deleteClient(client)
-            break
-
-# Quando coloco o @classmethod não vai...
-# Sobrecarregar esse método para receber o socket
+    try:
+        message = client.recv(2048)
+        print(parse_message(message))
+    except Exception as exc:
+        print('exception: %s' % exc)
 
 
-def start_listening(host, port):
+def handle_connection(client, address):
+    messagesTreatment(client)
+    client.close()
+
+
+def close_child_processes(signum, frame):
+    for p in child_processes:
+        p.terminate()
+
+
+def main():
+    HOST = 'localhost'
+    TCPPORT = 65136
+
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
-    # Pra não deixar processos conectados. Quando o processo morrer fecha tudo
+    # Pra não deixar conexão. Quando o processo morrer fecha tudo
     server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
     try:
-        server.bind((host, port))
+        server.bind((HOST, TCPPORT))
         server.listen()
-
         print(f'Server is running on: {server.getsockname()}')
     except Exception as exc:
         print('exception: %s' % exc)
-        return print('\nNão foi possível iniciar o servidor!\n')
+        return print('\nNão foi possível iniciar o servidor!\nException: %s' % exc)
 
+    signal.signal(signal.SIGTERM, close_child_processes)
     while True:
-        client, addr = server.accept()
-        socket_type = client.getsockopt(socket.SOL_SOCKET, socket.SO_TYPE)
+        client, address = server.accept()
 
-        match socket_type:
-            case socket.SOCK_DGRAM:
-                print("Um monitor conectou")
-                # Ou eu crio uma nova thread ou passo pro processo fazê-lo
-                # client.close()
-            case socket.SOCK_STREAM:
-                # Ou eu crio uma nova thread ou passo pro processo fazê-lo
-                print("Um cliente conectou!\n")
-
-                print('end of message')
-                thread = threading.Thread(
-                    target=messagesTreatment, args=[client])
-                thread.start()
-                client.close()
-
-                """
-                with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
-                future = executor.submit(recvall, client, 16)
-                print(future)
-
-                """
-            case _:
-                print("Requisição inválida!")
+        print("Um cliente conectou!\n")
+        proc = multiprocessing.Process(
+            target=handle_connection, args=[client, address])
+        child_processes.append(proc)
+        proc.start()
+        print(multiprocessing.active_children())
 
 
-if __name__ == "__main__":
-    HOST = 'localhost'
-    TCPPORT = 65136
-    UDPPORT = 65120
-
-    p = Process(target=UDPstart_listening, args=(HOST, UDPPORT))
-    p.start()
-    p.join()
-
-    thread = threading.Thread(target=start_listening, args=(HOST, TCPPORT))
-    thread.start()
+main()
