@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+
+
+# Lembrar de fazer um comando para todas as máquinas que estão conteinerizadas apontarem para o endereço do meu servidor
 import struct
 import json
 
@@ -73,17 +76,20 @@ def handle_tcp_request(request):
 
     headers = {}
     for line in lines[1:]:
-        print(line)
+        
         if line == '':
             break
+        print(line)
         key, value = line.split(': ')
         headers[key] = value
+        
     content_type = headers.get('Content-Type')
     content_length = int(headers.get('Content-Length', 0))
 
     # Parsea o corpo da requisição se ele existe e se é do tipo JSON
     body = ''
     if content_length > 0 and content_type == 'application/json':
+        print("HAHA")
         body = json.loads(lines[-1])
 
     response = "HTTP/1.1 200 ok\r\n"

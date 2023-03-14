@@ -24,6 +24,21 @@ child_processes = []
 # Tem que ter uma por tipo de conexão?
 
 
+
+"""
+    cliente_id = 12345
+
+    # Crie um diretório com o nome do cliente_id.
+    diretorio = f"./clientes/{cliente_id}"
+    os.makedirs(diretorio, exist_ok=True)
+
+    # Salve os dados do cliente em um arquivo dentro do diretório.
+    dados_do_cliente = {"nome": "João", "idade": 30, "email": "joao@example.com"}
+    arquivo = os.path.join(diretorio, "dados.json")
+    with open(arquivo, "w") as f:
+        json.dump(dados_do_cliente, f)
+"""
+
 def recvall(sock, length):
     data = b''
 
@@ -41,17 +56,24 @@ def recvall(sock, length):
 def handle_client_tcp(client, address):
     with client:
         request = client.recv(1024)
-
         print('Received TCP request from {}:'.format(address))
 
+        request = request.decode()
+        print(request)
+
+        lines = request.split('\n')
+        method, path, version = lines[0].split(' ')
+
         response = Routes.handle_tcp_request(request.decode())
+
         client.sendall(response.encode())
 
 
 def handle_client_udp(socket, data, address):
     with socket:
         request = data.decode()
-        print('Received UDP request from {}:'.format(address))
+        print('\n')
+        print('Received UDP request from: {}'.format(address))
         print(request)
         response = Routes.handle_udp_request(request)
         socket.sendto(response.encode(), address)
@@ -85,23 +107,22 @@ def main():
     try:
         tcp_socket.bind((HOST, TCPPORT))
         tcp_socket.listen()
-        print(f'Listening for TCP connections on {tcp_socket.getsockname()}')
+        print(f"Listening for TCP connections on {tcp_socket.getsockname()}")
 
         udp_socket.bind((HOST, UDPPORT))
-        print(f'Listening for UDP messages on {udp_socket.getsockname()}')
+        print(f"Listening for UDP messages on {udp_socket.getsockname()}")
     except Exception as exc:
         # Raise?
-        print('exception: %s' % exc)
-        return print('\nNão foi possível iniciar o servidor!\nException: %s' % exc)
+        print('\nNão foi possível iniciar o servidor!\nException: %s' % exc)
 
     while True:
         client, address = tcp_socket.accept()
 
-        with client:
-            thread = threading.Thread(
-                target=handle_client_tcp, args=[client, address])
-            thread.start()
+        thread = threading.Thread(
+            target=handle_client_tcp, args=[client, address])
+        thread.start()
 
+        """
         data, address = udp_socket.recvfrom(1024)
 
         message_type, payload_length, payload, addr = receive_udp_message(
@@ -112,6 +133,7 @@ def main():
         thread = threading.Thread(target=handle_client_udp, args=[
                                   udp_socket, data, address])
         thread.start()
+        """
 
 
 main()

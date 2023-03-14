@@ -1,1 +1,1 @@
-__all__ = ["TCPserver", "UDPserver"]
+__all__ = ["server.py", "UDPserver"]
