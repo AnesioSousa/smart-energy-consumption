@@ -4,8 +4,18 @@ import string
 import time
 import datetime
 import socket
+import struct
+from enum import Enum
 
 # IDEIA: Criar uma fábrica de eletrodomesticos e associar a um medidor. Em tempo de execução poder ligá-los (individualmente) e ver a alteração na conta
+MESSAGE_FORMAT = "HH1024s"
+
+
+Message = Enum('MESSAGE_TYPE', ['HELLO', 'DATA', 'GOODBYE'])
+
+MESSAGE_TYPE_HELLO = 1
+MESSAGE_TYPE_DATA = 2
+MESSAGE_TYPE_GOODBYE = 3
 
 
 class SmartMeter:
@@ -14,34 +24,45 @@ class SmartMeter:
         self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.host = host
         self.port = port
-        self.client_socket.connect((host, port))
         self.macAddress = macAddress
         self.serialNumber = ''.join(random.choices(
             string.ascii_letters + string.digits, k=32))
         self.myMeasurement = self.Measurement()
-        self.sendMeasure()
+        self.myMeasurement.startSensing()
+        self.client_socket.connect((host, port))
+        self.sendMeasure((host, port), MESSAGE_TYPE_DATA)
 
     @classmethod
     def getMeasurement(self):
         return self.myMeasurement.startSensing()
 
     @classmethod
-    def sendMeasure(self):
+    def sendMeasure(self, addr, message_type):
         while True:
+            print(self.myMeasurement.value)
             data = 'Counter value: {} kWh'.format(self.myMeasurement.value)
-            self.client_socket.sendall(data.encode())
-            self.myMeasurement.startSensing()
+
+            message = struct.pack('!iis', message_type,
+                                  len(data), data.encode('ascii'))
+            # É melhor usar sendall() ou sendoto()?
+            self.client_socket.sendto(message, addr)
 
             # Verificar se a conexão foi fechada pelo servidor
+            # Criar uma melhor condição de paradaAqui já entra as questões do livro sobre clientes promiscuos e etc
             response = self.client_socket.recv(1024)
             if not response:
                 break
+
+    @classmethod
+    def connect(self):
+        self.client_socket.connect((self.host, self.port))
 
     @classmethod
     def getSerialNumber(self):
         return self.serialNumber
 
     class Measurement:
+
         @classmethod
         def __init__(self):
             self.__value = 0
@@ -69,20 +90,9 @@ class SmartMeter:
         def __del__(self):
             print("Object is being destroyed with counter value:", self.value)
 
-        @classmethod
-        def connect(self):
-            self.client_socket.connect((self.host, self.port))
-
         @property
-        def measure(self):
+        def measure(self, time):
             med = self.value - self.lastMeasurement
             self.lastMeasurement = self.value
             self.lastMeasurementTimeStamp = datetime.datetime.now()
             return (med, self.lastMeasurementTimeStamp)
-
-
-def main():
-    my_smartMeter = SmartMeter('127.0.0.1', 65120)
-
-
-main()
