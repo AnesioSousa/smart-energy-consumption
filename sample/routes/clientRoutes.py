@@ -1,42 +1,8 @@
 #!/usr/bin/env python3
 
-
 # Lembrar de fazer um comando para todas as máquinas que estão conteinerizadas apontarem para o endereço do meu servidor
 import struct
 import json
-
-routes = {}
-
-
-def route(path):
-    def wrapper(handler):
-        routes[path] = handler
-        return handler
-    return wrapper
-
-
-@route('/')
-def index_handler():
-    return '<h1>Welcome to my website!</h1>'
-
-
-@route('/about')
-def about_handler():
-    return '<h1>About us</h1><p>We are a small company that loves to make websites.</p>'
-
-
-@route('/contact')
-def contact_handler():
-    return '<h1>Contact us</h1><p>Email: info@example.com</p><p>Phone: 555-1234</p>'
-
-
-@route('/api/smartmeter')
-def data_handler():
-    return '{"data": [1, 2, 3, 4, 5]}'
-
-
-def not_found():
-    return 'Page not found', 404
 
 # Esse cara tem que lidar com múltiplos protocolos
 
@@ -58,41 +24,28 @@ def get_response_data(method, path, query_params):
     else:
         return json.dumps({'error': 'Invalid request.'})
 
-    """
-    elif method == 'PUT' and path = '/login':
-        # logar user
-        return json.dumps({query_params[]})
-    """
-
 
 def handle_tcp_request(request):
-    """
-    handler = routes.get(path, not_found)
-    response, status = handler()
-    """
-
-    lines = request.split('\n')
-    method, path, version = lines[0].split(' ')
+    request = request.decode()
+    fields = request.split('\r\n')
+    method, path, version = fields[0].split(' ')
 
     headers = {}
-    for line in lines[1:]:
-        
-        if line == '':
+    for field in fields[1:]:
+        if field == '':
             break
-        print(line)
-        key, value = line.split(': ')
+        key, value = field.split(': ')
         headers[key] = value
-        
+
     content_type = headers.get('Content-Type')
     content_length = int(headers.get('Content-Length', 0))
 
     # Parsea o corpo da requisição se ele existe e se é do tipo JSON
     body = ''
     if content_length > 0 and content_type == 'application/json':
-        print("HAHA")
-        body = json.loads(lines[-1])
+        body = json.loads(fields[-1])
 
-    response = "HTTP/1.1 200 ok\r\n"
+    response = "HTTP/1.1 200 OK\r\n"
     response += "Content-Type: text/html\r\n"
     response += "\r\n"
     response += get_response_data(method, path, body)
@@ -103,3 +56,5 @@ def handle_tcp_request(request):
 def handle_udp_request(request):
     # Unpack the message from the binary string
     message_type, payload_length, payload = struct.unpack('!iis', request)
+
+    print(f"Received message type {message_type} from Teste: {payload}")

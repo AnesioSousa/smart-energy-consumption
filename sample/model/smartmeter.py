@@ -28,9 +28,7 @@ class SmartMeter:
         self.serialNumber = ''.join(random.choices(
             string.ascii_letters + string.digits, k=32))
         self.myMeasurement = self.Measurement()
-        self.myMeasurement.startSensing()
         self.client_socket.connect((host, port))
-        self.sendMeasure((host, port), MESSAGE_TYPE_DATA)
 
     @classmethod
     def getMeasurement(self):
@@ -39,7 +37,7 @@ class SmartMeter:
     @classmethod
     def sendMeasure(self, addr, message_type):
         while True:
-            print(self.myMeasurement.value)
+            print("HELL YEAH!")
             data = 'Counter value: {} kWh'.format(self.myMeasurement.value)
 
             message = struct.pack('!iis', message_type,
@@ -62,7 +60,6 @@ class SmartMeter:
         return self.serialNumber
 
     class Measurement:
-
         @classmethod
         def __init__(self):
             self.__value = 0
@@ -76,7 +73,8 @@ class SmartMeter:
         @classmethod
         def startSensing(self):
             time.sleep(1)
-            self.__value += 5
+            self.isMeasuring = True
+            self.value += 5
 
         @property
         def value(self):
