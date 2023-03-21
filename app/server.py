@@ -126,7 +126,7 @@ def main():
         date_time = datetime.fromtimestamp(time_stamp)
         print(date_time)
 
-        diretorio = f"./clientes/{id}"
+        diretorio = f"./monitors/{id}"
         arquivo = os.path.join(diretorio, f"{time_stamp}.json")
         os.makedirs(diretorio, exist_ok=True)
         with open(arquivo, "w") as f:
