@@ -1,31 +1,27 @@
-import unittest
-import socket
-
-from sample import *
-
-HOST = "127.0.0.1"
-PORT = 65432
-timeout_seconds = 1
+import threading
+import queue
 
 
-class TestServer(unittest.TestCase):
-    def setUp(self):
-        pass
-
-    def test_server_disconnection(self):
-        server = SimpleServer
-        self.client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.client.settimeout(timeout_seconds)
-        result = self.client.connect_ex((HOST, int(PORT)))
-        if result == 0:
-            print("Host: {}, Port: {} - True".format(HOST, PORT))
-        else:
-            print("Host: {}, Port: {} - False".format(HOST, PORT))
-        self.client.close()
-
-    def test_sum_tuple(self):
-        self.assertEqual(sum([1, 2, 2]), 6, "Should be 6")
+def drive(speed_queue):
+    speed = 1
+    while True:
+        try:
+            speed = speed_queue.get(timeout=1)
+            if speed == 0:
+                break
+        except queue.Empty:
+            pass
+        print("speed:", speed)
 
 
-if __name__ == "__main__":
-    unittest.main()
+def main():
+    speed_queue = queue.Queue()
+    threading.Thread(target=drive, args=(speed_queue,)).start()
+    while True:
+        speed = int(input("Enter 0 to Exit or 1/2/3 to continue: "))
+        speed_queue.put(speed)
+        if speed == 0:
+            break
+
+
+main()
