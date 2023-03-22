@@ -23,13 +23,17 @@ MESSAGE_TYPE_GOODBYE = 3
 
 class SmartMeter(object):
     @classmethod
-    def __init__(self):
+    def __init__(self, host, port):
         self.my_measurement = self.Measurement()
+        self.host = host
+        self.port = int(port)
 
     """"""
     @classmethod
     def create_connection(self, hostname, port, time):  # Se já tem um hostname vindo
         my_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        ip = socket.gethostbyname(hostname)
+
         hostname = sys.argv[2]  # Pra que substuir o que vem?
         my_socket.connect((hostname, port))
         time.sleep(time)
