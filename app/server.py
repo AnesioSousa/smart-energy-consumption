@@ -8,6 +8,7 @@ import os
 from datetime import datetime
 import threading
 import concurrent.futures
+import queue
 
 # O que vai rodar no processo principal? Já que to usando thread pra tudo?
 
@@ -18,11 +19,12 @@ MESSAGE_TYPE_DATA = 2
 MESSAGE_TYPE_GOODBYE = 3
 
 class UDPConnectionThread(threading.Thread):
-    def __init__(self, host, port,executor):
+    def __init__(self, host, port, executor):
         super().__init__()
         self.host = host
         self.port = port
         self.executor = executor
+        self.connected_sensors = {}
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.socket.bind((self.host, self.port))
         self.socket.settimeout(1)
@@ -31,20 +33,74 @@ class UDPConnectionThread(threading.Thread):
     def run(self):
         while True:
             try:
-                data, addr = self.socket.recvfrom(1024)
-                self.executor.submit(self.handle_request, data, addr)
+                data, address = self.socket.recvfrom(1024)
+                
+                json_data = json.loads(data)
+                id = json_data.get('id_sensor')
+                
+                
+                if self.connected_sensors.get(id) is not None:
+                    """
+                    Se tem medida, mas não atualiza, ou existe a thread mas não dá pra se comunicar no endereço dela:
+                    #reconexão - Atualizar o endereço da thread do cliente
+                    print(f"The sensor {id} is reconnected")
+                    """
+                    pass
+                else:
+                    print("New Connection!")
+                    #Acho que ele tem que mandar um Signal pra thread pegar o novo valor
+                    data_queue = queue.Queue()
+                    data_queue.put(data)
+                    
+                    my_receiver = self.Receaver(address, data_queue)
+                    self.connected_sensors[id] = my_receiver
+                    my_receiver.start()
+                    print(threading.active_count())
+                
+                    
+                    
+
             except socket.timeout:
                 pass
             
+    class Receaver(threading.Thread):
+        def __init__(self, address, queue):
+            super().__init__()
+            self.queue = queue
+            self.measures = []
+            self.address = address
+            
+        def run(self):
+            data = self.queue.get(timeout=1)
+            
+            if not data:
+                print("Algo de errado não está certo!")
+            
+            print(f"Received UDP data -> {data.decode()} from {self.address}")
+            # Do something with the data and address
+            
+            #response = "Hello from server"
+            
+            #LEMBRA QUE TEM QUE ENVIAR JSONS AQUI
+            #self.socket.sendto(response.encode(), self.address)
 
-    def handle_request(self, data, addr):
-        # Do something with the data and address
-        print(f"Received UDP data -> {data.decode()} from {addr}")
-        response = "Hello from server"
-        #LEMBRA QUE TEM QUE ENVIAR JSONS AQUI
-        self.socket.sendto(response.encode(), addr)
-        self.executor
         
+        def get_sensor_id(self):
+            return self.id_sensor
+        
+        class Message:
+            def __init__(self, data, address):
+                self.data = data
+                self.address = address
+            
+            
+            def get_data(self):
+                return self.data
+            
+            def get_address(self):
+                return self.address
+    
+
 class TCPConnectionThread(threading.Thread):
     def __init__(self,  host, port,executor):
         super().__init__()
@@ -55,6 +111,7 @@ class TCPConnectionThread(threading.Thread):
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.socket.bind((self.host, self.port))
         print("Listening to TCP connections on {!r}".format(self.socket.getsockname()))
+        #print(socket.gethostbyname(socket.gethostname()))
 
     def run(self):
         self.socket.settimeout(1)
@@ -85,16 +142,7 @@ class TCPConnectionThread(threading.Thread):
 
         # Close the client socket
         client_socket.close()
-
-
-
-class SmartSenser:
-    def __init__(self, address, data, timestamp):
-        self.address = address
-        pass
-    
-class Receaver:
-    pass
+        
 
 
 class Server():
@@ -110,6 +158,7 @@ class Server():
     def start(self):
         self.udp_connection_thread.start()
         self.tcp_connection_thread.start()
+        
         
     """
 
@@ -164,9 +213,9 @@ class Server():
     
 
 def main():
-    HOST = 'localhost'
-    TCPPORT = 65138
-    UDPPORT = 65122
+    HOST = '172.16.103.208'
+    TCPPORT = 65136
+    UDPPORT = 65120
 
     my_server = Server(HOST, UDPPORT, TCPPORT)
     my_server.start()

@@ -35,7 +35,7 @@ def send_update(consumo, sock, queue):
         consumo += calculate_consumn(5200, refresh_time)
 
         json_data = json.dumps({
-            "id_sensor": "SNS331",
+            "id_sensor": "SNS445",
             "request_id": "HESOYAM",
             "refresh_time": refresh_time,
             "time_stamp": time.time(),
@@ -43,6 +43,7 @@ def send_update(consumo, sock, queue):
         })
         sock.send(json_data.encode())
         queue.put(refresh_time)
+        print(json_data)
         time.sleep(refresh_time)
 
 
@@ -73,7 +74,7 @@ if __name__ == '__main__':
     CURRENT_CONSUMN = 0
     refresh_time_queue = queue.Queue()
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    sock.connect(('localhost', 65122))
+    sock.connect(('172.16.103.208', 65120))
     print("Sucessfully connected")
     print('The OS assigned me the address {}'.format(sock.getsockname()))
 

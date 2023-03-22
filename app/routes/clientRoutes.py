@@ -16,14 +16,14 @@ def get_response_data(method, path, query_params):
 
         return
 
-    elif method == 'POST' and path == '/calcularFatura/:id':
+    elif method == 'POST' and path == '/calcularFatura/id':
         
         # Pede o id do monitor e a quantidade de dias. Retorna a fatura em formato Json
         return json.dumps({'counter': "123"})
     elif method == 'POST' and path == '/api/smartmeter/id':
         # definir consumo
         data = path.split('/')
-        print(data[4])
+        print(data)
         return json.dumps({'status': 'ok',
                            "SmartMeter_ID": id})
     elif method == 'PUT' and path == '/api/smartmeter':
