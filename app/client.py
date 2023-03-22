@@ -17,7 +17,6 @@ time: minutes (min)
 
 """
 
-
 def calculate_consumn(potency, time):
     converted_time = time/60  # Convert minutes to hours
     converted_power = potency/1000  # Convert Watts to kiloWatts
@@ -45,9 +44,6 @@ def send_update(consumo, sock, queue):
         sock.send(json_data.encode())
         queue.put(refresh_time)
         time.sleep(refresh_time)
-
-        print(consumo)
-        print("Data was send!")
 
 
 def get_total_consumn(time):
@@ -77,7 +73,7 @@ if __name__ == '__main__':
     CURRENT_CONSUMN = 0
     refresh_time_queue = queue.Queue()
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    sock.connect(('localhost', 65120))
+    sock.connect(('localhost', 65122))
     print("Sucessfully connected")
     print('The OS assigned me the address {}'.format(sock.getsockname()))
 
@@ -86,15 +82,17 @@ if __name__ == '__main__':
     """
     text = f'1124 {calculate_consumn(5200, 10)} {sock.getsockname()}'
     """
-    refresh_time_queue.put(5)
+    refresh_time_queue.put(2)
     threading.Thread(target=send_update, args=[CURRENT_CONSUMN,
                      sock, refresh_time_queue]).start()
 
     # Tempo padrao de envio de dados é 10 min
-
+    # Não é melhor usar o connect?
+    # Usar thread aqui
     data, address = sock.recvfrom(1024)  # Aceita requisições do servidor
     # Tratar aqui o tempo de update
 
+    """
     json_data = json.loads(data)
     time_to_take_measures = json_data.get('refresh_time')
 
@@ -103,3 +101,7 @@ if __name__ == '__main__':
         refresh_time_queue.put(time_to_take_measures)
 
     print('The server {} replied {!r}'.format(address, data))
+    
+    
+    """
+    
