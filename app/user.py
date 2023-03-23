@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-
+import json
 class User:
     def __init__(self, name, address, email, password):
         self.name = name
@@ -13,4 +13,6 @@ class User:
     def measurements(self):
         return self.smart_senser_measurements
 
-        
+    def toJSON(self):
+        return json.dumps(self, default=lambda o: o.__dict__, 
+            sort_keys=True, indent=4)
