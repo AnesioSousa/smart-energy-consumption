@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import socket
 from datetime import datetime
 import time
@@ -35,15 +37,13 @@ def send_update(consumo, sock, queue):
         consumo += calculate_consumn(5200, refresh_time)
 
         json_data = json.dumps({
-            "id_sensor": "SNS445",
-            "request_id": "HESOYAM",
-            "refresh_time": refresh_time,
-            "time_stamp": time.time(),
-            "current_measurement": consumo
+            "id_sensor": "SNS554",
+            "current_measurement": consumo,
+            "time_stamp": time.time()
         })
         sock.send(json_data.encode())
         queue.put(refresh_time)
-        print(json_data)
+
         time.sleep(refresh_time)
 
 
@@ -78,31 +78,13 @@ if __name__ == '__main__':
     print("Sucessfully connected")
     print('The OS assigned me the address {}'.format(sock.getsockname()))
 
-    # E o id da requisição?
-
-    """
-    text = f'1124 {calculate_consumn(5200, 10)} {sock.getsockname()}'
-    """
-    refresh_time_queue.put(2)
+    refresh_time_queue.put(10)
     threading.Thread(target=send_update, args=[CURRENT_CONSUMN,
                      sock, refresh_time_queue]).start()
 
-    # Tempo padrao de envio de dados é 10 min
+    # Tempo padrao de envio de dados é 10 segundos
     # Não é melhor usar o connect?
     # Usar thread aqui
     data, address = sock.recvfrom(1024)  # Aceita requisições do servidor
     # Tratar aqui o tempo de update
-
-    """
-    json_data = json.loads(data)
-    time_to_take_measures = json_data.get('refresh_time')
-
-    # Atualizo o tempo de refresh
-    if (time_to_take_measures != 10):
-        refresh_time_queue.put(time_to_take_measures)
-
-    print('The server {} replied {!r}'.format(address, data))
-    
-    
-    """
     
